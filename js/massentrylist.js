@@ -17,16 +17,26 @@ async function getcardlist() {
 
     let massEntryListString = "";
 
+    let passcodesToCountsMap = new Map();
+
     for (let i = 0; i < passcodes.length; i++) {
         let passcode = passcodes[i];
 
-        let response = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${passcode}`);
+        if (passcodesToCountsMap.has(passcode)) {
+            passcodesToCountsMap.set(passcode, passcodesToCountsMap.get(passcode) + 1);
+        } else {
+            passcodesToCountsMap.set(passcode, 1);
+        }
+    }
 
-        let responseJson = await response.json();
+    let commaSeparatedIds = Array.from(passcodesToCountsMap.keys()).join(",");
 
-        let cardName = responseJson["data"][0]["name"];
+    let response = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${commaSeparatedIds}`);
 
-        massEntryListString += "1 " + cardName + "\n";
+    let responseJson = await response.json();
+
+    for (let data of responseJson["data"]) {
+        massEntryListString +=  passcodesToCountsMap.get(String(data["id"]).padStart(8, "0")) + " " + data["name"] + "\n";
     }
 
     massentrylist.innerHTML = massEntryListString;
